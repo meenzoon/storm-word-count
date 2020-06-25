@@ -3,7 +3,6 @@ package storm.word.count;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
-// For logging
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
 import org.apache.storm.Constants;
@@ -14,21 +13,20 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-// There are a variety of bolt types. In this case, use BaseBasicBolt
 public class WordCount extends BaseBasicBolt {
-  // Create logger for this class
+
+  private static final long serialVersionUID = 1L;
+
   private static final Logger logger = LogManager.getLogger(WordCount.class);
-  // For holding words and counts
+
   Map<String, Integer> counts = new HashMap<String, Integer>();
-  // How often to emit a count of words
+
   private Integer emitFrequency;
 
-  // Default constructor
   public WordCount() {
     emitFrequency = 5; // Default to 60 seconds
   }
 
-  // Constructor that sets emit frequency
   public WordCount(Integer frequency) {
     emitFrequency = frequency;
   }
@@ -46,6 +44,7 @@ public class WordCount extends BaseBasicBolt {
   // execute is called to process tuples
   @Override
   public void execute(Tuple tuple, BasicOutputCollector collector) {
+    logger.info("WordCount execute");
     // If it's a tick tuple, emit all words and counts
     if (tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID)
         && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID)) {
@@ -70,6 +69,7 @@ public class WordCount extends BaseBasicBolt {
   // Declare that this emits a tuple containing two fields; word and count
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
+    logger.info("WordCount declareOutputFields");
     declarer.declare(new Fields("word", "count"));
   }
 }

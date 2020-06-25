@@ -10,18 +10,24 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
 import org.apache.storm.utils.Utils;
 
-// This spout randomly emits sentences
 public class RandomSentenceSpout extends BaseRichSpout {
+
+  private static final long serialVersionUID = 1L;
+
   // Collector used to emit output
-  SpoutOutputCollector _collector;
-  // Used to generate a random number
+  SpoutOutputCollector collector;
+
   Random _rand;
+
+  private final String[] sentences = new String[] {"the cow jumped over the moon",
+      "an apple a day keeps the doctor away", "four score and seven years ago",
+      "snow white and the seven dwarfs", "i am at two with nature"};
 
   // Open is called when an instance of the class is created
   @Override
-  public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+  public void open(Map conf, TopologyContext context, SpoutOutputCollector spoutOutputCollector) {
     // Set the instance collector to the one passed in
-    _collector = collector;
+    this.collector = spoutOutputCollector;
     // For randomness
     _rand = new Random();
   }
@@ -31,14 +37,12 @@ public class RandomSentenceSpout extends BaseRichSpout {
   public void nextTuple() {
     // Sleep for a bit
     Utils.sleep(100);
-    // The sentences that are randomly emitted
-    String[] sentences = new String[] {"the cow jumped over the moon",
-        "an apple a day keeps the doctor away", "four score and seven years ago",
-        "snow white and the seven dwarfs", "i am at two with nature"};
-    // Randomly pick a sentence
+
+    // sentences 데이터 중 한 개 선택
     String sentence = sentences[_rand.nextInt(sentences.length)];
+
     // Emit the sentence
-    _collector.emit(new Values(sentence));
+    this.collector.emit(new Values(sentence));
   }
 
   // Ack is not implemented since this is a basic example
