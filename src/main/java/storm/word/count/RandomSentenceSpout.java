@@ -2,6 +2,8 @@ package storm.word.count;
 
 import java.util.Map;
 import java.util.Random;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -13,47 +15,47 @@ import org.apache.storm.utils.Utils;
 public class RandomSentenceSpout extends BaseRichSpout {
 
   private static final long serialVersionUID = 1L;
+  private static final Logger logger = LogManager.getLogger(RandomSentenceSpout.class);
 
-  // Collector used to emit output
-  SpoutOutputCollector collector;
-
+  SpoutOutputCollector _collector;
   Random _rand;
-
-  private final String[] sentences = new String[] {"the cow jumped over the moon",
-      "an apple a day keeps the doctor away", "four score and seven years ago",
-      "snow white and the seven dwarfs", "i am at two with nature"};
 
   // Open is called when an instance of the class is created
   @Override
-  public void open(Map conf, TopologyContext context, SpoutOutputCollector spoutOutputCollector) {
-    // Set the instance collector to the one passed in
-    this.collector = spoutOutputCollector;
-    // For randomness
+  public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+    logger.info("RandomSentenceSpout Open");
+
+    _collector = collector;
     _rand = new Random();
   }
 
   // Emit data to the stream
   @Override
   public void nextTuple() {
-    // Sleep for a bit
+    // logger.info("RandomSentenceSpout NextTuple");
     Utils.sleep(100);
 
-    // sentences 데이터 중 한 개 선택
-    String sentence = sentences[_rand.nextInt(sentences.length)];
+    String[] sentences = new String[] {"the cow jumped over the moon",
+        "an apple a day keeps the doctor away", "four score and seven years ago",
+        "snow white and the seven dwarfs", "i am at two with nature"};
 
-    // Emit the sentence
-    this.collector.emit(new Values(sentence));
+    String sentence = sentences[_rand.nextInt(sentences.length)];
+    _collector.emit(new Values(sentence));
+
   }
 
-  // Ack is not implemented since this is a basic example
+  // msgId(?)를 이용하여 Spout에서 방출 된 튜플이 완전히 처리된것이 확인됐을때
   @Override
-  public void ack(Object id) {}
+  public void ack(Object id) {
+    logger.info("Spout Completed: " + id.toString());
+  }
 
-  // Fail is not implemented since this is a basic example
+  // msgId(message id)를 이용하여 가져온 튜플이 처리에 실패했을때
   @Override
-  public void fail(Object id) {}
+  public void fail(Object id) {
+    logger.error("Spout Erorr: " + id.toString());
+  }
 
-  // Declare the output fields. In this case, an sentence
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
     declarer.declare(new Fields("sentence"));

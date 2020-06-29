@@ -16,7 +16,6 @@ import org.apache.storm.tuple.Values;
 public class WordCount extends BaseBasicBolt {
 
   private static final long serialVersionUID = 1L;
-
   private static final Logger logger = LogManager.getLogger(WordCount.class);
 
   Map<String, Integer> counts = new HashMap<String, Integer>();
@@ -24,7 +23,7 @@ public class WordCount extends BaseBasicBolt {
   private Integer emitFrequency;
 
   public WordCount() {
-    emitFrequency = 5; // Default to 60 seconds
+    emitFrequency = 10; // Default to 60 seconds
   }
 
   public WordCount(Integer frequency) {
@@ -37,6 +36,7 @@ public class WordCount extends BaseBasicBolt {
   @Override
   public Map<String, Object> getComponentConfiguration() {
     Config conf = new Config();
+    // __tick 이 반복적으로 실행될 seconds 설정
     conf.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, emitFrequency);
     return conf;
   }
@@ -44,8 +44,13 @@ public class WordCount extends BaseBasicBolt {
   // execute is called to process tuples
   @Override
   public void execute(Tuple tuple, BasicOutputCollector collector) {
-    logger.info("WordCount execute");
-    // If it's a tick tuple, emit all words and counts
+    // logger.info("WordCount execute");
+    // logger.info("Tuple SourceComponent: " + tuple.getSourceComponent());
+    // logger.info("Tuple SourceStreamId: " + tuple.getSourceStreamId());
+    // If it's a tick tuple, 튜플 전부 실행 시 단어와 count 수 출력
+    /*
+     * Constants.SYSTEM_COMPONENT_ID = '__system', Constants.SYSTEM_TICK_STREAM_ID = '__tick'
+     */
     if (tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID)
         && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID)) {
       for (String word : counts.keySet()) {
@@ -69,7 +74,7 @@ public class WordCount extends BaseBasicBolt {
   // Declare that this emits a tuple containing two fields; word and count
   @Override
   public void declareOutputFields(OutputFieldsDeclarer declarer) {
-    logger.info("WordCount declareOutputFields");
+    // logger.info("WordCount declareOutputFields");
     declarer.declare(new Fields("word", "count"));
   }
 }

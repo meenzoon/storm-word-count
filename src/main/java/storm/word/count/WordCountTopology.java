@@ -1,5 +1,7 @@
 package storm.word.count;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
@@ -8,25 +10,20 @@ import org.apache.storm.tuple.Fields;
 
 public class WordCountTopology {
 
+  private static final Logger logger = LogManager.getLogger(WordCountTopology.class);
+
   public static void main(String[] args) throws Exception {
+
     TopologyBuilder builder = new TopologyBuilder();
-    /*
-     * spout id: 'spout', IRichSpout: storm.word.count.RandomSentenceSpout, parallelism hint: 5
-     */
-    builder.setSpout("spout", new RandomSentenceSpout(), 5);
 
-    /*
-     * bolt id: 'split', IBasicBolt: storm.word.count.SplitSentence, parallelism hint: 8,
-     * shuffleGrouping: 'spout'
-     */
-    builder.setBolt("split", new SplitSentence(), 8).shuffleGrouping("spout");
+    // builder.setSpout("spout", new RandomSentenceSpout(), 5);
+    builder.setSpout("spout", new RandomSentenceSpout());
 
-    /*
-     * bolt id: 'count', IBasicBolt: storm.word.count.WordCount, parallelism hint: 12,
-     * fieldsgrouping subscribes to the split bolt, and // ensures that the same word is sent to the
-     * same instance (group by field 'word')
-     */
-    builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
+    // builder.setBolt("split", new SplitSentence(), 8).shuffleGrouping("spout");
+    builder.setBolt("split", new SplitSentence()).shuffleGrouping("spout");
+
+    // builder.setBolt("count", new WordCount(), 12).fieldsGrouping("split", new Fields("word"));
+    builder.setBolt("count", new WordCount()).fieldsGrouping("split", new Fields("word"));
 
     Config conf = new Config();
 
@@ -46,14 +43,25 @@ public class WordCountTopology {
       /*
        * Cap the maximum number of executors that can be spawned for a component to 3
        */
-      conf.setMaxTaskParallelism(3);
+      // conf.setMaxTaskParallelism(3);
 
       // LocalCluster는 로컬에서 작동하는 클러스터
       LocalCluster cluster = new LocalCluster();
 
       // submit the topology
-      cluster.submitTopology("local cluster apache storm word-count", conf,
-          builder.createTopology());
+      cluster.submitTopology("WordCountTopology", conf, builder.createTopology());
+
+      logger.info("TopologyBuilder Submit Topology");
+
+      try {
+        Thread.sleep(10000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
+      cluster.killTopology("WordCountTopology");
 
       cluster.shutdown();
     }
